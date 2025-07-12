@@ -5,25 +5,29 @@ from flask import Flask, render_template, jsonify, request, send_file
 from sense_hat import SenseHat
 from sensehat_interface import get_all_sensor_data
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
+# Define paths
+base_dir = os.path.dirname(os.path.abspath(_file_))
 template_path = os.path.join(base_dir, '../templates')
 static_path = os.path.join(base_dir, '../static')
 log_path = os.path.join(base_dir, 'sensor_log.csv')
 
-app = Flask(__name__, template_folder=template_path, static_folder=static_path)
+app = Flask(_name_, template_folder=template_path, static_folder=static_path)
 sense = SenseHat()
 
-# Ensure log file exists with headers
-if not os.path.exists(log_path):
+# Ensure CSV exists with header
+csv_headers = [
+    'Timestamp', 'Temperature (C)', 'Humidity (%)', 'Pressure (hPa)',
+    'Orientation Pitch (°)', 'Orientation Roll (°)', 'Orientation Yaw (°)',
+    'Gyroscope X (°/s)', 'Gyroscope Y (°/s)', 'Gyroscope Z (°/s)',
+    'Accelerometer X (g)', 'Accelerometer Y (g)', 'Accelerometer Z (g)'
+]
+
+if not os.path.exists(log_path) or os.stat(log_path).st_size == 0:
     with open(log_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow([
-            'Timestamp', 'Temperature (C)', 'Humidity (%)', 'Pressure (hPa)',
-            'Orientation Pitch (°)', 'Orientation Roll (°)', 'Orientation Yaw (°)',
-            'Gyroscope X (°/s)', 'Gyroscope Y (°/s)', 'Gyroscope Z (°/s)',
-            'Accelerometer X (g)', 'Accelerometer Y (g)', 'Accelerometer Z (g)'
-        ])
+        writer.writerow(csv_headers)
 
+# ROUTES
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -38,21 +42,7 @@ def get_sensor_data():
 
     try:
         table = {label: value for label, value in data}
-        row = [
-            table.get("Timestamp", ""),
-            table.get("Temperature (C)", 0),
-            table.get("Humidity (%)", 0),
-            table.get("Pressure (hPa)", 0),
-            table.get("Orientation Pitch (°)", 0),
-            table.get("Orientation Roll (°)", 0),
-            table.get("Orientation Yaw (°)", 0),
-            table.get("Gyroscope X (°/s)", 0),
-            table.get("Gyroscope Y (°/s)", 0),
-            table.get("Gyroscope Z (°/s)", 0),
-            table.get("Accelerometer X (g)", 0),
-            table.get("Accelerometer Y (g)", 0),
-            table.get("Accelerometer Z (g)", 0),
-        ]
+        row = [table.get(h, 0) for h in csv_headers]
         with open(log_path, 'a', newline='') as f:
             csv.writer(f).writerow(row)
     except Exception as e:
@@ -67,13 +57,16 @@ def log_data():
         with open(log_path, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                timestamp = row["Timestamp"]
-                for key, value in row.items():
+                ts = row["Timestamp"]
+                for key, val in row.items():
                     if key == "Timestamp":
                         continue
-                    data.setdefault(key, []).append({"x": timestamp, "y": float(value)})
+                    try:
+                        data.setdefault(key, []).append({"x": ts, "y": float(val)})
+                    except:
+                        data.setdefault(key, []).append({"x": ts, "y": None})
     except Exception as e:
-        print("Log read error:", e)
+        print("log_data error:", e)
     return jsonify(data)
 
 @app.route('/download/log')
@@ -103,7 +96,8 @@ def get_led_matrix_state():
 
 @app.route('/api/message', methods=['POST'])
 def display_message():
-    text = request.get_json().get("text", "")
+    data = request.get_json()
+    text = data.get("text", "")
     sense.show_message(text, text_colour=[255, 255, 255])
     return '', 204
 
@@ -112,5 +106,6 @@ def clear_display():
     sense.clear()
     return '', 204
 
-if __name__ == '__main__':
+# ENTRY POINT
+if _name_ == '_main_':
     app.run(host='0.0.0.0', port=5000)
