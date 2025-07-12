@@ -18,6 +18,30 @@ A complete IoT monitoring and control dashboard built on Raspberry Pi using Flas
 
 ---
 
+## 📷 Project Preview
+
+Below are reference images of the hardware setup and the live web dashboard interface.
+
+### 🔌 Hardware Setup
+
+<p align="center">
+  <img src="img/WhatsApp Image 2025-07-13 at 01.31.39_c1eb7e84.jpg" alt="Hardware Setup" width="150">
+</p>
+
+This shows the physical setup of the Raspberry Pi with the Sense HAT and wiring.
+
+### 🖥 Live Web Dashboard GUI
+
+<p align="center">
+  <img src="img/WhatsApp Image 2025-07-13 at 01.32.01_cb4dc69b.jpg" alt="Web Interface" width="140">
+</p>
+
+This is how the final IoT dashboard looks in a browser — featuring live data, LED control, and logging.
+
+> ✅ Both images are stored in the img/ folder inside this repository.
+
+---
+
 ## 📂 Project Structure
 
 ```
